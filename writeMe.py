@@ -3,7 +3,7 @@
 import pgdb
 import time
 
-DATABASE_NAME = 'ossdb'
+DATABASE_NAME = 'yaoya'
 DATABASE_USER = 'postgres'
 DATABASE_PASS = 'postgres'
 HOST = '127.0.0.1'
