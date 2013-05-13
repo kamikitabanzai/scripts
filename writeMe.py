@@ -33,9 +33,9 @@ class CheckerProcess():
     self._con = pgdb.connect(host=HOST,database=DATABASE_NAME,user=DATABASE_USER,password=DATABASE_PASS)
     self._cur = self._con.cursor()
 
-  def run(self):
+  def run(self,queries):
     end = 0
-    for q in QUERY:
+    for q in queries:
       print q
 
       self._cur.execute(q)
@@ -65,19 +65,18 @@ class CheckerProcess():
 
     return
 
-  def headShow(self,head):
+  def headShow(self,heads):
     headOut ='('
-    for h in head:
+    for h in heads:
       if not headOut == '(':
         headOut += ','
       headOut += h[0]
     headOut +=')'
     print headOut
 
-
-  def rowShow(self,result):
+  def rowShow(self,rows):
     limiter = 0
-    for row in result:
+    for row in rows:
 
       limiter += 1
       if limiter > ROW_LIMIT:
@@ -100,7 +99,7 @@ def main():
   checker = CheckerProcess()
 
   try:
-    checker.run()
+    checker.run(QUERY)
     
   except Exception , e:
     print  e 
