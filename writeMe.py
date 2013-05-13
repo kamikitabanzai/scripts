@@ -23,7 +23,7 @@ QUERY = [
     SELECT
      *
     FROM
-     customer
+     supp
   '''
 ]
 
@@ -38,32 +38,23 @@ class CheckerProcess():
     for q in QUERY:
       print q
 
+      self._cur.execute(q)
+
+      head = self._cur.description 
+      self.headShow(head) 
+
+      result = self._cur.fetchall()
+      self.rowShow(result)
+
+      print DIVIDER
+      print ' %d 行' % len(result)
+      
+      #実行時間は2回目を出力
       start = time.time()
       self._cur.execute(q)
       each = time.time() - start
       end += each
-      
-      result = self._cur.fetchall()
-      limiter = 0
-      for row in result:
-
-        limiter += 1
-        if limiter > ROW_LIMIT:
-          break
-
-        rowOut =' ['
-        for column in row:
-          
-          if not rowOut == ' [':
-            rowOut += ','
-          if not isinstance(column,int):
-            rowOut += column.decode('utf-8')
-          else:
-            rowOut += str(column)
-        rowOut += ']'
-        print rowOut
-      print DIVIDER
-      print ' %d 行' % len(result)
+     
       print ' %.5f sec' % each
       print QUERY_DIVIDER
     print '計:%.5f sec' % end
@@ -73,6 +64,36 @@ class CheckerProcess():
     self._con.close()
 
     return
+
+  def headShow(self,head):
+    headOut ='('
+    for h in head:
+      if not headOut == '(':
+        headOut += ','
+      headOut += h[0]
+    headOut +=')'
+    print headOut
+
+
+  def rowShow(self,result):
+    limiter = 0
+    for row in result:
+
+      limiter += 1
+      if limiter > ROW_LIMIT:
+         break
+
+      rowOut =' ['
+      for column in row:
+        if not rowOut == ' [':
+          rowOut += ','
+
+        if not isinstance(column,int):
+          rowOut += column.decode('utf-8')
+        else:
+          rowOut += str(column)
+      rowOut += ']'
+      print rowOut
 
 def main():
   
