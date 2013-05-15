@@ -61,12 +61,14 @@ class CheckerProcess():
       print q
       print ''
       self._cur.execute(q)
+      
+      view = SqlViewer()
 
       head = self._cur.description 
-      self.headShow(head) 
+      view.headShow(head) 
 
       result = self._cur.fetchall()
-      self.rowShow(result)
+      view.rowShow(result)
 
       print DIVIDER
       print ' %d 行' % len(result)
@@ -87,6 +89,7 @@ class CheckerProcess():
 
     return
 
+class SqlViewer():
   def headShow(self,heads):
     headOut ='('
     for h in heads:
@@ -99,7 +102,6 @@ class CheckerProcess():
   def rowShow(self,rows):
     limiter = 0
     for row in rows:
-
       limiter += 1
       if limiter > ROW_LIMIT:
          break
@@ -120,6 +122,7 @@ def main():
 
   try:
     argvs = sys.argv
+
     db_selecter = SelectDB()
     db_selecter.select()
     
