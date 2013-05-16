@@ -122,6 +122,10 @@ def main():
 
   try:
     argvs = sys.argv
+    
+    if len(argvs) < 2:
+      print 'requires sql file'
+      return
 
     db_selecter = SelectDB()
     db_selecter.select()
