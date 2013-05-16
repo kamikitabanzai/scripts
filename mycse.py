@@ -49,7 +49,7 @@ class SelectQuery():
     sqls.pop()
     return sqls
 
-class CheckerProcess():
+class ExecuteProcess():
 
   def __init__(self):
     self._con = pgdb.connect(**DSN) 
@@ -136,8 +136,8 @@ def main():
     qy_selecter = SelectQuery()
     QUERY=qy_selecter.select(argvs[1])
 
-    checker = CheckerProcess()
-    checker.run(QUERY)
+    pgprocess = ExecuteProcess()
+    pgprocess.run(QUERY)
     
   except Exception , e:
     print  e 
