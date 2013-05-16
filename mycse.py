@@ -4,12 +4,8 @@ import sys
 import pgdb
 import time
 
-DATABASE_NAME = ''
-DATABASE_USER = ''
-DATABASE_PASS = ''
-HOST = ''
-
 QUERY = []
+DSN = []
 
 ROW_LIMIT = 15
 
@@ -18,23 +14,28 @@ QUERY_DIVIDER = '******************************'
 
 class SelectDB():
   def select(self,con_file):
+
     f=open(con_file,'r')
-    global DATABASE_NAME
-    global DATABASE_USER
-    global DATABASE_PASS
-    global HOST
+
+    host = ''
+    database = ''
+    user = ''
+    password = ''
 
     for line in f:
       paras = line.split('=')
-      if DATABASE_NAME == '' and paras[0].strip() == 'DATABASE_NAME':
-        DATABASE_NAME = paras[1].strip()
-      elif DATABASE_USER == '' and paras[0].strip() == 'DATABASE_USER':
-        DATABASE_USER = paras[1].strip()
-      elif DATABASE_PASS == '' and paras[0].strip() == 'DATABASE_PASS':
-        DATABASE_PASS = paras[1].strip()
-      elif HOST == '' and paras[0].strip() == 'HOST':
-        HOST = paras[1].strip()
+      if paras[0].strip() == 'DATABASE_NAME':
+        database = paras[1].strip()
+      elif paras[0].strip() == 'DATABASE_USER':
+        user = paras[1].strip()
+      elif paras[0].strip() == 'DATABASE_PASS':
+        password = paras[1].strip()
+      elif paras[0].strip() == 'HOST':
+        host= paras[1].strip()
     f.close()
+
+    con_str = {'host':host,'database':database,'user':user,'password':password}
+    return con_str
 
 class SelectQuery():
 
@@ -46,14 +47,13 @@ class SelectQuery():
     f.close()
     sqls = longline.split(';')
     sqls.pop()
-    global QUERY
-    QUERY.extend(sqls)
+    return sqls
 
 class CheckerProcess():
 
   def __init__(self):
-    self._con = pgdb.connect(host=HOST,database=DATABASE_NAME,user=DATABASE_USER,password=DATABASE_PASS)
-    self._cur = self._con.cursor()
+    self._con = pgdb.connect(**DSN) 
+    self._cur = self._con.cursor() 
 
   def run(self,queries):
     end = 0
@@ -128,11 +128,13 @@ def main():
       print 'requires sql file'
       return
 
+    global DSN 
     db_selecter = SelectDB()
-    db_selecter.select('con.con')
-    
+    DSN=db_selecter.select('con.con')
+
+    global QUERY
     qy_selecter = SelectQuery()
-    qy_selecter.select(argvs[1])
+    QUERY=qy_selecter.select(argvs[1])
 
     checker = CheckerProcess()
     checker.run(QUERY)
