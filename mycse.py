@@ -17,8 +17,8 @@ DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
 
 class SelectDB():
-  def select(self):
-    f=open('con.con','r')
+  def select(self,con_file):
+    f=open(con_file,'r')
     global DATABASE_NAME
     global DATABASE_USER
     global DATABASE_PASS
@@ -58,6 +58,7 @@ class CheckerProcess():
   def run(self,queries):
     end = 0
     for q in queries:
+      print QUERY_DIVIDER
       print q
       print ''
       self._cur.execute(q)
@@ -128,7 +129,7 @@ def main():
       return
 
     db_selecter = SelectDB()
-    db_selecter.select()
+    db_selecter.select('con.con')
     
     qy_selecter = SelectQuery()
     qy_selecter.select(argvs[1])
