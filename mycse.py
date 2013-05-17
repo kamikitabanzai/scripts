@@ -5,15 +5,15 @@ import pgdb
 import time
 
 QUERY = []
-DSN = []
+DSN = dict()
 
 ROW_LIMIT = 15
 
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
 
-class SelectDB():
-  def select(self,con_file):
+class GetDSN():
+  def get(self,con_file):
 
     f=open(con_file,'r')
 
@@ -37,9 +37,9 @@ class SelectDB():
     con_str = {'host':host,'database':database,'user':user,'password':password}
     return con_str
 
-class SelectQuery():
+class GetQuery():
 
-  def select(self,sql_file):
+  def get(self,sql_file):
     longline = ''
     f=open(sql_file,'r')
     for line in f:
@@ -74,7 +74,7 @@ class ExecuteProcess():
       print DIVIDER
       print ' %d 行' % len(result)
       
-      #実行時間は2回目を出力
+      #実行間は2回目を出力
       start = time.time()
       self._cur.execute(q)
       each = time.time() - start
@@ -129,12 +129,12 @@ def main():
       return
 
     global DSN 
-    db_selecter = SelectDB()
-    DSN=db_selecter.select('con.con')
+    db_getter = GetDSN()
+    DSN=db_getter.get('con.con')
 
     global QUERY
-    qy_selecter = SelectQuery()
-    QUERY=qy_selecter.select(argvs[1])
+    qy_getter = GetQuery()
+    QUERY=qy_getter.get(argvs[1])
 
     pgprocess = ExecuteProcess()
     pgprocess.run(QUERY)
