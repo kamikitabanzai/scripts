@@ -72,6 +72,10 @@ class ExecuteProcess():
       each = time.time() - start
       end += each
       view.each = each
+      
+      exp_q = 'explain ' + q
+      self._cur.execute(exp_q)
+      view.explain = self._cur.fetchall()
 
       view.view()
     print '計:%.2f sec' % end
@@ -87,6 +91,7 @@ class SqlViewer():
   result = []
   q = ''
   each = 0
+  explain = []
 
   def view(self):
       print self.q
@@ -98,6 +103,10 @@ class SqlViewer():
       print DIVIDER
       print ' %d 行' % len(self.result)
       print ' %.2f sec' % self.each
+
+      for exp in self.explain:
+        print exp
+
       print QUERY_DIVIDER
 
   def headShow(self,heads):
@@ -127,7 +136,7 @@ class SqlViewer():
           rowOut += str(column)
       rowOut += ']'
       print rowOut
-
+    
 def main():
 
   try:
