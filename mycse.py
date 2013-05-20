@@ -58,27 +58,22 @@ class ExecuteProcess():
   def run(self,queries):
     end = 0
     for q in queries:
-      self._cur.execute(q)
-      head = self._cur.description 
-      result = self._cur.fetchall()
+      view = SqlViewer()
 
-      #実行時間は安定するよう2回目を出力
+      view.q = q
+
+      self._cur.execute(q)
+      view.head = self._cur.description 
+      view.result = self._cur.fetchall()
+
+      #実行時間の取得（安定するよう2回目を計測）
       start = time.time()
       self._cur.execute(q)
       each = time.time() - start
       end += each
+      view.each = each
 
-      print q
-      print ''
-      
-      view = SqlViewer()
-      view.headShow(head) 
-      view.rowShow(result)
-
-      print DIVIDER
-      print ' %d 行' % len(result)
-      print ' %.2f sec' % each
-      print QUERY_DIVIDER
+      view.view()
     print '計:%.2f sec' % end
     print ''
     
@@ -88,6 +83,23 @@ class ExecuteProcess():
     return
 
 class SqlViewer():
+  head = []
+  result = []
+  q = ''
+  each = 0
+
+  def view(self):
+      print self.q
+      print ''
+      
+      self.headShow(self.head) 
+      self.rowShow(self.result)
+
+      print DIVIDER
+      print ' %d 行' % len(self.result)
+      print ' %.2f sec' % self.each
+      print QUERY_DIVIDER
+
   def headShow(self,heads):
     headOut ='('
     for h in heads:
