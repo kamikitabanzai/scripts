@@ -1,9 +1,9 @@
 select
  * 
 from
-prod
+mst_prod
 ;
 
 select
  *
-from prod;
+from mst_prod;

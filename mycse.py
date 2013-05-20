@@ -7,7 +7,7 @@ import time
 QUERY = []
 DSN = dict()
 
-ROW_LIMIT = 15
+ROW_LIMIT = 10
 
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
@@ -43,7 +43,7 @@ class GetQuery():
     longline = ''
     f=open(sql_file,'r')
     for line in f:
-      longline += line.replace('\n',' ')
+      longline += line
     f.close()
     sqls = longline.split(';')
     sqls.pop()
@@ -58,31 +58,28 @@ class ExecuteProcess():
   def run(self,queries):
     end = 0
     for q in queries:
-      print QUERY_DIVIDER
-      print q
-      print ''
       self._cur.execute(q)
-      
-      view = SqlViewer()
-
       head = self._cur.description 
-      view.headShow(head) 
-
       result = self._cur.fetchall()
-      view.rowShow(result)
 
-      print DIVIDER
-      print ' %d 行' % len(result)
-      
-      #実行間は2回目を出力
+      #実行時間は安定するよう2回目を出力
       start = time.time()
       self._cur.execute(q)
       each = time.time() - start
       end += each
-     
-      print ' %.5f sec' % each
+
+      print q
+      print ''
+      
+      view = SqlViewer()
+      view.headShow(head) 
+      view.rowShow(result)
+
+      print DIVIDER
+      print ' %d 行' % len(result)
+      print ' %.2f sec' % each
       print QUERY_DIVIDER
-    print '計:%.5f sec' % end
+    print '計:%.2f sec' % end
     print ''
     
     self._cur.close()
