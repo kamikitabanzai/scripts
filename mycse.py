@@ -8,6 +8,7 @@ QUERY = []
 DSN = dict()
 
 ROW_LIMIT = 10
+COST_LIMIT = 10**7
 
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
@@ -58,10 +59,20 @@ class ExecuteProcess():
   def run(self,queries):
     end = 0
     for q in queries:
+
+      # まずcostが閾値以下であることを確認
+      exp_q = 'explain ' + q
+      self._cur.execute(exp_q)
+      exp_r = self._cur.fetchall()
+
+      sqlexplain = SqlExplain()
+      if not sqlexplain.checkCost(exp_r):
+        continue
+      
+      # SQLを実行し出力
       view = SqlViewer()
-
       view.q = q
-
+      view.explain = exp_r 
       self._cur.execute(q)
       view.head = self._cur.description 
       view.result = self._cur.fetchall()
@@ -73,11 +84,8 @@ class ExecuteProcess():
       end += each
       view.each = each
       
-      exp_q = 'explain ' + q
-      self._cur.execute(exp_q)
-      view.explain = self._cur.fetchall()
-
       view.view()
+
     print '計:%.2f sec' % end
     print ''
     
@@ -85,6 +93,26 @@ class ExecuteProcess():
     self._con.close()
 
     return
+
+class SqlExplain():
+
+  def checkCost(self,explain):
+    cost = self.getCost(explain)
+
+    if cost < COST_LIMIT:
+      return True
+    else:
+      print 'cost=%.2f the cost of this query is over the limit' % (cost)
+      return False
+
+  def getCost(self,explain):
+    header = explain[0][0].split(' ')
+    cost = 0
+    for h in header:
+      if h.find('cost=') > 0:
+        strCost = h.split('..')[1]
+        cost = float(strCost)
+    return cost
 
 class SqlViewer():
   head = []
@@ -100,12 +128,12 @@ class SqlViewer():
       self.headShow(self.head) 
       self.rowShow(self.result)
 
+      for exp in self.explain:
+        print exp
+
       print DIVIDER
       print ' %d 行' % len(self.result)
       print ' %.2f sec' % self.each
-
-      for exp in self.explain:
-        print exp
 
       print QUERY_DIVIDER
 
@@ -124,14 +152,14 @@ class SqlViewer():
       limiter += 1
       if limiter > ROW_LIMIT:
          break
-
+      #str型を文字コード変換しないとバイナリで出力される
       rowOut =' ['
       for column in row:
         if not rowOut == ' [':
           rowOut += ','
 
-        if not isinstance(column,int):
-          rowOut += column.decode('utf-8')
+        if isinstance(column,str):
+          rowOut += column #.decode('utf-8')
         else:
           rowOut += str(column)
       rowOut += ']'
