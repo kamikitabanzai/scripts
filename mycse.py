@@ -58,6 +58,7 @@ class ExecuteProcess():
 
   def run(self,queries):
     end = 0
+    total = Total()
     for q in queries:
 
       # まずcostが閾値以下であることを確認
@@ -86,13 +87,27 @@ class ExecuteProcess():
       
       view.view()
 
-    print '計:%.2f sec' % end
-    print ''
-    
+      total.each.append(each)
+
+    total.end = end
+    total.totalShow()
+
     self._cur.close()
     self._con.close()
 
     return
+
+class Total():
+  each = []
+  end = 0
+
+  def totalShow(self):
+    count = 0
+    for e in self.each:
+      count += 1
+      print '[%s]:%.2f' % (count,e)
+    print 'Total:%.2f sec' % self.end
+    print ''
 
 class SqlExplain():
 
