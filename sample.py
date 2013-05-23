@@ -14,12 +14,6 @@ QUERY = [
     FROM 
      mst_prod
   '''
-  ,'''
-    SELECT
-     *
-    FROM
-     mst_supp
-  '''
 ]
 
 class CheckerProcess():
@@ -32,7 +26,7 @@ class CheckerProcess():
     for q in queries:
       self._cur.execute(q)
       rows = self._cur.fetchall()
-      print rows[0]
+      print rows[0][0]
 
     self._cur.close()
     self._con.close()
