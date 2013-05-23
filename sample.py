@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# postgres接続用APIのライブラリを呼び出す
 import pgdb
 
 DATABASE_NAME = ''
