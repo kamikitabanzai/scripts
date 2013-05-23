@@ -8,7 +8,7 @@ DATABASE_PASS = ''
 HOST = ''
 
 class DSNGet():
-
+  # 外部ファイルcon.conから接続情報を取得する
   def run(self):
     f=open('con.con','r')
     global DATABASE_NAME
@@ -29,7 +29,9 @@ class DSNGet():
 
 class GoProcess():
 
+  # コンストラクタの使い方
   def __init__(self):
+    # セッションを作成
     self._con = pgdb.connect(host=HOST,database=DATABASE_NAME,user=DATABASE_USER,password=DATABASE_PASS)
     self._cur = self._con.cursor()
 
@@ -48,8 +50,11 @@ class GoProcess():
     ]
 
     for q in query:
+      # sql を実行
       self._cur.execute(q)
+      # 実行結果を取得
       rows = self._cur.fetchall()
+      # 1行目と2行目の一列目を出力
       print rows[0][0]
       print rows[1][0]
 
@@ -75,6 +80,7 @@ def main():
   except KeyboardInterrupt:
     print  'KeyboardInterrupt' 
 
+# このソースを呼び出した時に実行される
 if __name__ == '__main__':
     main()
 
