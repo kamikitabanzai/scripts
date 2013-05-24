@@ -13,6 +13,8 @@ COST_LIMIT = 10**7
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
 
+INDEX_QUERY = 'select tablename , indexname , indexdef from pg_indexes where schemaname = \'public\''
+
 class GetDSN():
   def get(self,con_file):
 
@@ -90,6 +92,10 @@ class ExecuteProcess():
       total.each.append(each)
 
     total.end = end
+
+    self._cur.execute(INDEX_QUERY)
+    total.indexes = self._cur.fetchall()
+
     total.totalShow()
 
     self._cur.close()
@@ -100,8 +106,13 @@ class ExecuteProcess():
 class Total():
   each = []
   end = 0
+  indexes = []
 
   def totalShow(self):
+    for i in self.indexes:
+      print i
+    print DIVIDER
+
     count = 0
     for e in self.each:
       count += 1

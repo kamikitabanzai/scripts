@@ -1,0 +1,59 @@
+select 
+	new_zip_id
+	,char_length(area)
+	,char_length(area_kana)
+	,area
+	,area_kana
+from mst_zip
+where new_zip_id in
+(
+	select 
+		a.new_zip_id 
+	from mst_zip a 
+		left outer join mst_zip b 
+			on a.new_zip_id = b.new_zip_id
+			   and a.order_id < b.order_id
+	where 
+		b.order_id is not null 
+		and a.r_bigarea_flg = false
+		and a.r_smallarea_flg = false
+)
+
+
+(new_zip_id,char_length,char_length,area,area_kana)
+ [6028064,30,6,一町目（上長者町通堀川東入、東堀川通上長者町上る、東堀川通中,イッチョウメ]
+ [6028064,6,6,立売通下る）,イッチョウメ]
+ [6020848,28,6,扇町（寺町通今出川下る、寺町通石薬師上る、寺町通石薬師下,オウギチョウ]
+ [6020848,20,6,る、寺町通広小路上る、石薬師通寺町東入）,オウギチョウ]
+ [6020847,30,7,大宮町（今出川通河原町西入、今出川通寺町東入、今出川通寺町東,オオミヤチョウ]
+ [6020847,35,7,入下る、河原町通今出川下る、河原町通今出川下る西入、寺町通今出川下る東,オオミヤチョウ]
+ [6020847,11,7,入、中筋通石薬師上る）,オオミヤチョウ]
+ [6028062,30,6,亀屋町（油小路通上長者町下る、油小路通下長者町上る、油小路通,カメヤチョウ]
+ [6028062,36,6,中長者町上る、油小路通中長者町下る、上長者町通油小路西入、上長者町通油小,カメヤチョウ]
+ [6028062,4,6,路東入）,カメヤチョウ]
+['Hash Join  (cost=42086.23..56915.56 rows=62169 width=268)']
+['  Hash Cond: ((mst_zip.new_zip_id)::text = ((a.new_zip_id)::text))']
+['  ->  Seq Scan on mst_zip  (cost=0.00..3751.98 rows=123398 width=268)']
+['  ->  Hash  (cost=41119.13..41119.13 rows=55608 width=16)']
+['        ->  Unique  (cost=40841.09..41119.13 rows=55608 width=16)']
+['              ->  Sort  (cost=40841.09..40980.11 rows=55608 width=16)']
+['                    Sort Key: ((a.new_zip_id)::text)']
+['                    ->  Merge Join  (cost=31701.07..35506.34 rows=55608 width=16)']
+['                          Merge Cond: ((a.new_zip_id)::text = (b.new_zip_id)::text)']
+['                          Join Filter: (a.order_id < b.order_id)']
+['                          ->  Sort  (cost=15470.58..15760.03 rows=115779 width=12)']
+['                                Sort Key: a.new_zip_id']
+['                                ->  Seq Scan on mst_zip a  (cost=0.00..3751.98 rows=115779 width=12)']
+['                                      Filter: ((NOT r_bigarea_flg) AND (NOT r_smallarea_flg))']
+['                          ->  Materialize  (cost=16230.49..16844.40 rows=122781 width=12)']
+['                                ->  Sort  (cost=16230.49..16537.44 rows=122781 width=12)']
+['                                      Sort Key: b.new_zip_id']
+['                                      ->  Seq Scan on mst_zip b  (cost=0.00..3751.98 rows=122781 width=12)']
+['                                            Filter: (order_id IS NOT NULL)']
+-----------------------
+ 399 行
+ 1.72 sec
+******************************
+[1]:1.72
+Total:1.72 sec
+
