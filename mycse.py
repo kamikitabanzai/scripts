@@ -138,6 +138,7 @@ class SqlExplain():
       if h.find('cost=') > 0:
         strCost = h.split('..')[1]
         cost = float(strCost)
+        break
     return cost
 
 class SqlViewer():
@@ -191,6 +192,20 @@ class SqlViewer():
       rowOut += ']'
       print rowOut
     
+class MyCseService:
+
+  def run(self,sql):
+    global DSN 
+    db_getter = GetDSN()
+    DSN=db_getter.get('con.con')
+
+    global QUERY
+    qy_getter = GetQuery()
+    QUERY=qy_getter.get(sql)
+
+    pgprocess = ExecuteProcess()
+    pgprocess.run(QUERY)
+
 def main():
 
   try:
@@ -199,17 +214,9 @@ def main():
     if len(argvs) < 2:
       print 'requires sql file'
       return
-
-    global DSN 
-    db_getter = GetDSN()
-    DSN=db_getter.get('con.con')
-
-    global QUERY
-    qy_getter = GetQuery()
-    QUERY=qy_getter.get(argvs[1])
-
-    pgprocess = ExecuteProcess()
-    pgprocess.run(QUERY)
+    
+    service = MyCseService() 
+    service.run(argvs[1])
     
   except Exception , e:
     print  e 
