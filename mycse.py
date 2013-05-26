@@ -16,29 +16,30 @@ QUERY_DIVIDER = '******************************'
 INDEX_QUERY = 'select tablename , indexname , indexdef from pg_indexes where schemaname = \'public\''
 
 class GetDSN():
+
+  def __init__(self):
+    self.con_str = {}
+
   def get(self,con_file):
+
+    buff = {}
 
     f=open(con_file,'r')
 
-    host = ''
-    database = ''
-    user = ''
-    password = ''
-
     for line in f:
       paras = line.split('=')
-      if paras[0].strip() == 'DATABASE_NAME':
-        database = paras[1].strip()
-      elif paras[0].strip() == 'DATABASE_USER':
-        user = paras[1].strip()
-      elif paras[0].strip() == 'DATABASE_PASS':
-        password = paras[1].strip()
-      elif paras[0].strip() == 'HOST':
-        host= paras[1].strip()
+      if len(paras) <= 1:
+        continue
+      buff[paras[0].strip()] = paras[1].strip()
+
     f.close()
 
-    con_str = {'host':host,'database':database,'user':user,'password':password}
-    return con_str
+    self.con_str['host'] = buff['HOST']
+    self.con_str['database'] = buff['DATABASE_NAME']
+    self.con_str['user'] = buff['DATABASE_USER']
+    self.con_str['password'] = buff['DATABASE_PASS']
+      
+    return self.con_str
 
 class GetQuery():
 
@@ -61,45 +62,43 @@ class ExecuteProcess():
   def run(self,queries):
     end = 0
     total = Total()
-    for q in queries:
+    try:
+      for q in queries:
 
-      # まずcostが閾値以下であることを確認
-      exp_q = 'explain ' + q
-      self._cur.execute(exp_q)
-      exp_r = self._cur.fetchall()
+        # まずcostが閾値以下であることを確認
+        sqlexplain = SqlExplain()
+        explain = sqlexplain.exeExplain(q)
+        if not sqlexplain.checkCost(explain):
+          continue
+        
+        start = time.time()
+        self._cur.execute(q)
+        each = time.time() - start
+        end += each
+        
+        view = SqlViewer()
+        view.each = each
+        view.q = q
+        view.explain = explain
+        view.head = self._cur.description 
+        view.result = self._cur.fetchall()
 
-      sqlexplain = SqlExplain()
-      if not sqlexplain.checkCost(exp_r):
-        continue
-      
-      # SQLを実行し出力
-      view = SqlViewer()
-      view.q = q
-      view.explain = exp_r 
-      self._cur.execute(q)
-      view.head = self._cur.description 
-      view.result = self._cur.fetchall()
+        view.view()
 
-      #実行時間の取得（安定するよう2回目を計測）
-      start = time.time()
-      self._cur.execute(q)
-      each = time.time() - start
-      end += each
-      view.each = each
-      
-      view.view()
+        total.each.append(each)
 
-      total.each.append(each)
+      total.end = end
 
-    total.end = end
+      self._cur.execute(INDEX_QUERY)
+      total.indexes = self._cur.fetchall()
 
-    self._cur.execute(INDEX_QUERY)
-    total.indexes = self._cur.fetchall()
+      total.totalShow()
 
-    total.totalShow()
-
-    self._cur.close()
-    self._con.close()
+    except :
+      raise
+    finally:
+      self._con.close()
+      self._cur.close()
 
     return
 
@@ -122,7 +121,25 @@ class Total():
 
 class SqlExplain():
 
+  def __init__(self):
+    self._con = pgdb.connect(**DSN) 
+    self._cur = self._con.cursor() 
+
+  def exeExplain(self,sql):
+    try:
+      exp_q = 'explain ' + sql
+      self._cur.execute(exp_q)
+      exp_r = self._cur.fetchall()
+    except:
+      raise
+    finally:
+      self._con.close()
+      self._cur.close()
+
+    return exp_r
+  
   def checkCost(self,explain):
+
     cost = self.getCost(explain)
 
     if cost < COST_LIMIT:
