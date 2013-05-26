@@ -19,10 +19,9 @@ class GetDSN():
 
   def __init__(self):
     self.con_str = {}
+    self.buff = {}
 
   def get(self,con_file):
-
-    buff = {}
 
     f=open(con_file,'r')
 
@@ -30,28 +29,31 @@ class GetDSN():
       paras = line.split('=')
       if len(paras) <= 1:
         continue
-      buff[paras[0].strip()] = paras[1].strip()
+      self.buff[paras[0].strip()] = paras[1].strip()
 
     f.close()
 
-    self.con_str['host'] = buff['HOST']
-    self.con_str['database'] = buff['DATABASE_NAME']
-    self.con_str['user'] = buff['DATABASE_USER']
-    self.con_str['password'] = buff['DATABASE_PASS']
+    self.con_str['host'] = self.buff['HOST']
+    self.con_str['database'] = self.buff['DATABASE_NAME']
+    self.con_str['user'] = self.buff['DATABASE_USER']
+    self.con_str['password'] = self.buff['DATABASE_PASS']
       
     return self.con_str
 
 class GetQuery():
 
+  def __init__(self):
+    self.longline = ''
+    self.sqls = []
+
   def get(self,sql_file):
-    longline = ''
     f=open(sql_file,'r')
     for line in f:
-      longline += line
+      self.longline += line
     f.close()
-    sqls = longline.split(';')
-    sqls.pop()
-    return sqls
+    self.sqls = self.longline.split(';')
+    self.sqls.pop()
+    return self.sqls
 
 class ExecuteProcess():
 
