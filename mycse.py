@@ -116,7 +116,7 @@ class ExecuteProcess():
       self._cur.execute(INDEX_QUERY)
       total.indexes = self._cur.fetchall()
 
-      total.totalShow()
+      total.view()
 
     except :
       raise
@@ -131,12 +131,17 @@ class Total():
     self.each = []
     self.end = 0
     self.indexes = []
+  
+  def view(self):
+    self.indexShow(self.indexes)
+    self.totalShow()
 
-  def totalShow(self):
-    for i in self.indexes:
+  def indexShow(self,indexes):
+    for i in indexes:
       print i
     print DIVIDER
 
+  def totalShow(self):
     count = 0
     for e in self.each:
       count += 1
@@ -197,11 +202,13 @@ class SqlCheckCost():
     return float(strCost)
 
 class SqlViewer():
-  head = []
-  result = []
-  q = ''
-  each = 0
-  explain = []
+
+  def __init__(self):
+    self.head = []
+    self.result = []
+    self.q = ''
+    self.each = 0
+    self.explain = []
 
   def view(self):
     self.queryShow(self.q) 
@@ -211,6 +218,7 @@ class SqlViewer():
     self.subShow()
 
   def queryShow(self,query):
+    print ''
     print query
 
   def subShow(self):
@@ -224,33 +232,42 @@ class SqlViewer():
       print exp
 
   def headShow(self,heads):
+    headOut = self.makeHead(heads)
+    print headOut
+  
+  def makeHead(self,heads):
     headOut ='('
     for h in heads:
       if not headOut == '(':
         headOut += ','
       headOut += h[0]
     headOut +=')'
-    print headOut
-
+    return headOut
+  
   def rowShow(self,rows):
     limiter = 0
     for row in rows:
-      limiter += 1
-      if limiter > ROW_LIMIT:
-         break
-      #str型を文字コード変換しないとバイナリで出力される
-      rowOut =' ['
-      for column in row:
-        if not rowOut == ' [':
-          rowOut += ','
-
-        if isinstance(column,str):
-          rowOut += column #.decode('utf-8')
-        else:
-          rowOut += str(column)
-      rowOut += ']'
+      rowOut = self.makeRow(row)
       print rowOut
-    
+
+      limiter += 1
+      if limiter >= ROW_LIMIT:
+         break
+
+  def makeRow(self,row):
+    rowOut =' ['
+    for column in row:
+      if not rowOut == ' [':
+        rowOut += ','
+
+      if isinstance(column,str):
+        rowOut += column #.decode('utf-8')
+      else:
+        rowOut += str(column)
+    rowOut += ']'
+
+    return rowOut
+
 class MyCseService:
 
   def run(self,sql):
