@@ -23,22 +23,38 @@ class GetDSN():
 
   def get(self,con_file):
 
-    f=open(con_file,'r')
-
-    for line in f:
-      paras = line.split('=')
-      if len(paras) <= 1:
-        continue
-      self.buff[paras[0].strip()] = paras[1].strip()
-
-    f.close()
-
-    self.con_str['host'] = self.buff['HOST']
-    self.con_str['database'] = self.buff['DATABASE_NAME']
-    self.con_str['user'] = self.buff['DATABASE_USER']
-    self.con_str['password'] = self.buff['DATABASE_PASS']
+    self.buff = self.conFile2dict(con_file)
+    self.con_str = self.buff2con(self.buff)
       
     return self.con_str
+
+  def buff2con(self,buff):
+    con_str = {}
+
+    con_str['host'] = buff['HOST']
+    con_str['database'] = buff['DATABASE_NAME']
+    con_str['user'] = buff['DATABASE_USER']
+    con_str['password'] = buff['DATABASE_PASS']
+ 
+    return con_str
+
+  def conFile2dict(self,con_file):
+    
+    f=open(con_file,'r')
+    buff = {}
+    for line in f:
+      if self.checkLine(line):
+        paras = line.split('=')
+        buff[paras[0].strip()] = paras[1].strip()
+
+    f.close()
+    return buff 
+
+  def checkLine(self,line):
+    if len(line.split('=')) <= 1:
+      return False
+    else:
+      return True  
 
 class GetQuery():
 
@@ -47,13 +63,18 @@ class GetQuery():
     self.sqls = []
 
   def get(self,sql_file):
-    f=open(sql_file,'r')
-    for line in f:
-      self.longline += line
-    f.close()
+    self.longline = self.sqlFile2long(sql_file)
     self.sqls = self.longline.split(';')
     self.sqls.pop()
     return self.sqls
+  
+  def sqlFile2long(self,sql_file):
+    longline = ''
+    f=open(sql_file,'r')
+    for line in f:
+      longline += line
+    f.close()
+    return longline
 
 class ExecuteProcess():
 
@@ -70,7 +91,8 @@ class ExecuteProcess():
         # まずcostが閾値以下であることを確認
         sqlexplain = SqlExplain()
         explain = sqlexplain.exeExplain(q)
-        if not sqlexplain.checkCost(explain):
+        sqlcheckcost = SqlCheckCost()
+        if not sqlcheckcost.checkCost(explain):
           continue
         
         start = time.time()
@@ -105,9 +127,10 @@ class ExecuteProcess():
     return
 
 class Total():
-  each = []
-  end = 0
-  indexes = []
+  def __init__(self):
+    self.each = []
+    self.end = 0
+    self.indexes = []
 
   def totalShow(self):
     for i in self.indexes:
@@ -139,12 +162,16 @@ class SqlExplain():
       self._cur.close()
 
     return exp_r
-  
+
+class SqlCheckCost():  
+  def __init__(self):
+    self.cost = 0
+
   def checkCost(self,explain):
 
-    cost = self.getCost(explain)
+    self.cost = self.getCost(explain)
 
-    if cost < COST_LIMIT:
+    if self.cost < COST_LIMIT:
       return True
     else:
       print 'cost=%.2f the cost of this query is over the limit' % (cost)
@@ -154,11 +181,20 @@ class SqlExplain():
     header = explain[0][0].split(' ')
     cost = 0
     for h in header:
-      if h.find('cost=') > 0:
-        strCost = h.split('..')[1]
-        cost = float(strCost)
+      if self.findCost(h): 
+        cost = self.returnCost(h) 
         break
     return cost
+  
+  def findCost(self,line):
+    if line.find('cost=') > 0:
+      return True
+    else:
+      return False
+
+  def returnCost(self,line):
+    strCost = line.split('..')[1]
+    return float(strCost)
 
 class SqlViewer():
   head = []
@@ -168,20 +204,24 @@ class SqlViewer():
   explain = []
 
   def view(self):
-      print self.q
-      print ''
-      
-      self.headShow(self.head) 
-      self.rowShow(self.result)
+    self.queryShow(self.q) 
+    self.headShow(self.head) 
+    self.rowShow(self.result)
+    self.expShow(self.explain)
+    self.subShow()
 
-      for exp in self.explain:
-        print exp
+  def queryShow(self,query):
+    print query
 
-      print DIVIDER
-      print ' %d 行' % len(self.result)
-      print ' %.2f sec' % self.each
+  def subShow(self):
+    print DIVIDER
+    print ' %d 行' % len(self.result)
+    print ' %.2f sec' % self.each
+    print QUERY_DIVIDER
 
-      print QUERY_DIVIDER
+  def expShow(self,explain):
+    for exp in explain:
+      print exp
 
   def headShow(self,heads):
     headOut ='('
