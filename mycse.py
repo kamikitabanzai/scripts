@@ -4,79 +4,71 @@ import sys
 import pgdb
 import time
 
-QUERY = []
-DSN = dict()
-
 ROW_LIMIT = 10
 COST_LIMIT = 10**7
+
+DSN = {}
 
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
 
 INDEX_QUERY = 'select tablename , indexname , indexdef from pg_indexes where schemaname = \'public\''
 
-class GetDSN():
+class File():
 
-  def __init__(self):
-    self.con_str = {}
-    self.buff = {}
+  def returnDsn(self,conFile):
+    buff = {}
+    dsn = {}
+    buff = self.conFile2buff(conFile)
+    dsn = self.buff2dsn(buff)
+    return dsn
 
-  def get(self,con_file):
+  def buff2dsn(self,buff):
+    dsn = {}
+    dsn['host'] = buff['HOST']
+    dsn['database'] = buff['DATABASE_NAME']
+    dsn['user'] = buff['DATABASE_USER']
+    dsn['password'] = buff['DATABASE_PASS']
+    return dsn
 
-    self.buff = self.conFile2dict(con_file)
-    self.con_str = self.buff2con(self.buff)
-      
-    return self.con_str
-
-  def buff2con(self,buff):
-    con_str = {}
-
-    con_str['host'] = buff['HOST']
-    con_str['database'] = buff['DATABASE_NAME']
-    con_str['user'] = buff['DATABASE_USER']
-    con_str['password'] = buff['DATABASE_PASS']
- 
-    return con_str
-
-  def conFile2dict(self,con_file):
-    
-    f=open(con_file,'r')
+  def conFile2buff(self,conFile):
+    f=open(conFile,'r')
     buff = {}
     for line in f:
-      if self.checkLine(line):
+      if self.haveMeaning(line):
         paras = line.split('=')
         buff[paras[0].strip()] = paras[1].strip()
-
     f.close()
     return buff 
 
-  def checkLine(self,line):
+  def haveMeaning(self,line):
     if len(line.split('=')) <= 1:
       return False
     else:
       return True  
 
-class GetQuery():
+  def returnSqls(self,sqlFile):
+    longLine = ''
+    sqls = []
+    longLine = self.sqlFile2longLine(sqlFile)
+    sqls = self.longLine2sqls(longLine)
+    return sqls
 
-  def __init__(self):
-    self.longline = ''
-    self.sqls = []
+  def longLine2sqls(self,longLine):
+    sqls = []
+    sqls = longLine.split(';')
+    sqls.pop()
+    return sqls
 
-  def get(self,sql_file):
-    self.longline = self.sqlFile2long(sql_file)
-    self.sqls = self.longline.split(';')
-    self.sqls.pop()
-    return self.sqls
-  
-  def sqlFile2long(self,sql_file):
-    longline = ''
-    f=open(sql_file,'r')
+  def sqlFile2longLine(self,sqlFile):
+    longLine = ''
+    f=open(sqlFile,'r')
     for line in f:
-      longline += line
+      longLine += line
     f.close()
-    return longline
+    return longLine
 
-class ExecuteProcess():
+class PgProcess():
 
   def __init__(self):
     self._con = pgdb.connect(**DSN) 
@@ -89,10 +81,9 @@ class ExecuteProcess():
       for q in queries:
 
         # まずcostが閾値以下であることを確認
-        sqlexplain = SqlExplain()
-        explain = sqlexplain.exeExplain(q)
-        sqlcheckcost = SqlCheckCost()
-        if not sqlcheckcost.checkCost(explain):
+        explainService = ExplainService()
+        explain = explainService.exeExplain(q)
+        if not explainService.checkCost(explain):
           continue
         
         start = time.time()
@@ -149,7 +140,7 @@ class Total():
     print 'Total:%.2f sec' % self.end
     print ''
 
-class SqlExplain():
+class ExplainService():
 
   def __init__(self):
     self._con = pgdb.connect(**DSN) 
@@ -168,15 +159,10 @@ class SqlExplain():
 
     return exp_r
 
-class SqlCheckCost():  
-  def __init__(self):
-    self.cost = 0
-
   def checkCost(self,explain):
+    cost = self.getCost(explain)
 
-    self.cost = self.getCost(explain)
-
-    if self.cost < COST_LIMIT:
+    if cost < COST_LIMIT:
       return True
     else:
       print 'cost=%.2f the cost of this query is over the limit' % (cost)
@@ -270,17 +256,15 @@ class SqlViewer():
 
 class MyCseService:
 
-  def run(self,sql):
-    global DSN 
-    db_getter = GetDSN()
-    DSN=db_getter.get('con.con')
+  def run(self,sqlFile):
+    file = File()
+    global DSN
+    sqls = []
+    DSN = file.returnDsn('con.con')
+    sqls = file.returnSqls(sqlFile)
 
-    global QUERY
-    qy_getter = GetQuery()
-    QUERY=qy_getter.get(sql)
-
-    pgprocess = ExecuteProcess()
-    pgprocess.run(QUERY)
+    pgprocess = PgProcess()
+    pgprocess.run(sqls)
 
 def main():
 
