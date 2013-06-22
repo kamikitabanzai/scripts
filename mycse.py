@@ -255,16 +255,16 @@ class SqlViewer():
     return rowOut
 
 class MyCseService:
+  def __init__(self):
+    file = File()
+    sqls = []
+    pgprocess = PgProcess()
 
   def run(self,sqlFile):
-    file = File()
     global DSN
-    sqls = []
-    DSN = file.returnDsn('con.con')
-    sqls = file.returnSqls(sqlFile)
-
-    pgprocess = PgProcess()
-    pgprocess.run(sqls)
+    DSN = self.file.returnDsn('con.con')
+    self.sqls = self.file.returnSqls(sqlFile)
+    self.pgprocess.run(self.sqls)
 
 def main():
 
