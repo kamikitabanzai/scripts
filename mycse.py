@@ -255,15 +255,15 @@ class SqlViewer():
     return rowOut
 
 class MyCseService:
-  def __init__(self):
-    file = File()
-    sqls = []
-    pgprocess = PgProcess()
-
-  def run(self,sqlFile):
+  def __init__(self,sqlFile):
     global DSN
-    DSN = self.file.returnDsn('con.con')
-    self.sqls = self.file.returnSqls(sqlFile)
+    file= File()
+    self.sqls = []
+    DSN = file.returnDsn('con.con')
+    self.sqls = file.returnSqls(sqlFile)
+    self.pgprocess = PgProcess()
+
+  def run(self):
     self.pgprocess.run(self.sqls)
 
 def main():
@@ -275,8 +275,8 @@ def main():
       print 'requires sql file'
       return
     
-    service = MyCseService() 
-    service.run(argvs[1])
+    service = MyCseService(argvs[1]) 
+    service.run()
     
   except Exception , e:
     print  e 
