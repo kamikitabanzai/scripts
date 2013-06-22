@@ -80,11 +80,8 @@ class PgProcess():
     try:
       for q in queries:
 
-        # まずcostが閾値以下であることを確認
         explainService = ExplainService()
-        explain = explainService.exeExplain(q)
-        if not explainService.checkCost(explain):
-          continue
+        explain = explainService.getExplain(q)
         
         start = time.time()
         self._cur.execute(q)
@@ -145,8 +142,29 @@ class ExplainService():
   def __init__(self):
     self._con = pgdb.connect(**DSN) 
     self._cur = self._con.cursor() 
+    self.enableSqls = []
 
-  def exeExplain(self,sql):
+  def cutHighCost(self,sqls):
+    for sql in sqls:
+      newSqls = []
+      plan = self.getExplain(sql)
+      if self.checkCost(plan):
+        newSqls.append(sql)
+      else:
+        cost = self.getCost(plan)
+        print 'this query dosn\'t'
+        print DIVIDER
+        print sql
+        print DIVIDER
+        print 'the cost of this query is over the limit cost=%.2f ' % (cost)
+
+    if len(newSqls) < 1:
+      raise NoEnableSql() 
+    
+    self.enableSqls = newSqls
+    return 
+
+  def getExplain(self,sql):
     try:
       exp_q = 'explain ' + sql
       self._cur.execute(exp_q)
@@ -156,20 +174,17 @@ class ExplainService():
     finally:
       self._con.close()
       self._cur.close()
-
     return exp_r
 
-  def checkCost(self,explain):
-    cost = self.getCost(explain)
-
+  def checkCost(self,plan):
+    cost = self.getCost(plan)
     if cost < COST_LIMIT:
       return True
     else:
-      print 'cost=%.2f the cost of this query is over the limit' % (cost)
       return False
 
-  def getCost(self,explain):
-    header = explain[0][0].split(' ')
+  def getCost(self,plan):
+    header = plan[0][0].split(' ')
     cost = 0
     for h in header:
       if self.findCost(h): 
@@ -186,6 +201,11 @@ class ExplainService():
   def returnCost(self,line):
     strCost = line.split('..')[1]
     return float(strCost)
+
+class NoEnableSql(BaseException):
+  def printException(self):
+    print DIVIDER
+    print "you have no enable sqls"
 
 class SqlViewer():
 
@@ -257,6 +277,7 @@ class SqlViewer():
 class MyCseService:
   def __init__(self,sqlFile):
     global DSN
+<<<<<<< HEAD
     file= File()
     self.sqls = []
     DSN = file.returnDsn('con.con')
@@ -265,6 +286,21 @@ class MyCseService:
 
   def run(self):
     self.pgprocess.run(self.sqls)
+=======
+    file = File()
+    self.sqls = []
+    DSN = file.returnDsn('con.con')
+    self.sqls = file.returnSqls(sqlFile)
+    self.explainService = ExplainService()
+    self.pgprocess = PgProcess()
+
+  def run(self):
+    # ヘビーSQLの削除
+    self.explainService.cutHighCost(self.sqls)
+
+    enableSqls = self.explainService.enableSqls
+    self.pgprocess.run(enableSqls)
+>>>>>>> dev_branch
 
 def main():
 
@@ -284,6 +320,8 @@ def main():
     print  traceback.format_exc() 
   except KeyboardInterrupt:
     print  'KeyboardInterrupt' 
+  except NoEnableSql, E:
+    E.printException()
 
 if __name__ == '__main__':
     main()
