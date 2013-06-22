@@ -277,16 +277,6 @@ class SqlViewer():
 class MyCseService:
   def __init__(self,sqlFile):
     global DSN
-<<<<<<< HEAD
-    file= File()
-    self.sqls = []
-    DSN = file.returnDsn('con.con')
-    self.sqls = file.returnSqls(sqlFile)
-    self.pgprocess = PgProcess()
-
-  def run(self):
-    self.pgprocess.run(self.sqls)
-=======
     file = File()
     self.sqls = []
     DSN = file.returnDsn('con.con')
@@ -300,7 +290,6 @@ class MyCseService:
 
     enableSqls = self.explainService.enableSqls
     self.pgprocess.run(enableSqls)
->>>>>>> dev_branch
 
 def main():
 
