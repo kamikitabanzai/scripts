@@ -83,7 +83,6 @@ class PgProcess():
   def createSessionRunningSql(self,sqls):
     for sql in sqls:
       self.runSql(sql,self.qID)
-      self.container.showOneResult(self.qID)
       self.qID += 1
     self.container.totalTime = self.totalTime
     self._cur.execute(INDEX_QUERY)
@@ -116,7 +115,12 @@ class ResultContainer():
     self.eachTimes = {}
     self.totalTime = 0
     self.indexes = []
-  
+ 
+  def showAllResult(self):
+    for qID in self.qIDs:
+      self.showOneResult(qID)
+    return
+
   def showOneResult(self,qID):
     print ''
     print self.sqls[qID]
@@ -153,6 +157,7 @@ class ResultContainer():
       limiter += 1
       if limiter >= ROW_LIMIT:
          break
+    return
 
   def makeRow(self,row):
     rowOut =' ['
@@ -240,16 +245,17 @@ class MyCseService:
     self.sqls = file.returnSqls(sqlFile)
     self.explainService = ExplainService(dsn)
     self.container = ResultContainer()
-    # 実行結果をコンテナに格納する
+    # 実行結果はコンテナに格納する
     self.pgprocess = PgProcess(dsn,self.container)
 
   def run(self):
     # ヘビーSQLの削除
     self.explainService.cutHighCost(self.sqls)
-    # SQLの実行と結果の出力
+    # SQLの実行
     enableSqls = self.explainService.enableSqls
     self.pgprocess.run(enableSqls)
-    # 実行結果まとめの出力
+    # 実行結果の出力
+    self.container.showAllResult()
     self.container.showSummary()
 
 class NoEnableSql(BaseException):
@@ -258,14 +264,11 @@ class NoEnableSql(BaseException):
     print "you have no enable sqls"
 
 def main():
-
+  argvs = sys.argv
+  if len(argvs) < 2:
+    print 'requires sql file'
+    return
   try:
-    argvs = sys.argv
-    
-    if len(argvs) < 2:
-      print 'requires sql file'
-      return
-    
     service = MyCseService(argvs[1]) 
     service.run()
   except Exception , e:
@@ -277,6 +280,7 @@ def main():
   except NoEnableSql, E:
     E.printException()
 
+#start地点(pythonから最初に呼び出される)
 if __name__ == '__main__':
     main()
 
