@@ -7,8 +7,6 @@ import time
 ROW_LIMIT = 10
 COST_LIMIT = 10**7
 
-DSN = {}
-
 DIVIDER = '-----------------------'
 QUERY_DIVIDER = '******************************'
 
@@ -64,10 +62,10 @@ class File():
 
 class PgProcess():
 
-  def __init__(self,container):
-    self._con = pgdb.connect(**DSN) 
+  def __init__(self,dsn,container):
+    self._con = pgdb.connect(**dsn) 
     self._cur = self._con.cursor() 
-    self.explainService = ExplainService()
+    self.explainService = ExplainService(dsn)
     self.container = container
     self.qID = 0
     self.totalTime = 0
@@ -182,8 +180,8 @@ class ResultContainer():
 
 class ExplainService():
 
-  def __init__(self):
-    self._con = pgdb.connect(**DSN) 
+  def __init__(self,dsn):
+    self._con = pgdb.connect(**dsn) 
     self._cur = self._con.cursor() 
     self.enableSqls = []
  
@@ -235,15 +233,15 @@ class ExplainService():
 
 class MyCseService:
   def __init__(self,sqlFile):
-    global DSN
+    dsn = {}
     file = File()
     self.sqls = []
-    DSN = file.returnDsn('con.con')
+    dsn = file.returnDsn('con.con')
     self.sqls = file.returnSqls(sqlFile)
-    self.explainService = ExplainService()
+    self.explainService = ExplainService(dsn)
     self.container = ResultContainer()
     # 実行結果をコンテナに格納する
-    self.pgprocess = PgProcess(self.container)
+    self.pgprocess = PgProcess(dsn,self.container)
 
   def run(self):
     # ヘビーSQLの削除
