@@ -12,7 +12,7 @@ QUERY_DIVIDER = '******************************'
 
 INDEX_QUERY = 'select tablename , indexname , indexdef from pg_indexes where schemaname = \'public\''
 
-class File():
+class FileService():
 
   def returnFromFile(self,obj,file):
     return obj.returnFromFile(file)
@@ -249,7 +249,7 @@ class MyCseService:
     dsn = {}
     self.sqls = []
     # ダックタイピングをしてみる(Javaでもインターフェース使って出来るよ！）
-    file = File()
+    file = FileService()
     dsn = file.returnFromFile(DnsFileService(),'con.con')
     self.sqls = file.returnFromFile(SqlFileService(),sqlFile)
     self.explainService = ExplainService(dsn)
