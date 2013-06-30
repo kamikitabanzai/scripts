@@ -17,11 +17,11 @@ class File():
   def returnDsn(self,conFile):
     buff = {}
     dsn = {}
-    buff = self.conFile2buff(conFile)
-    dsn = self.buff2dsn(buff)
+    buff = self.__conFile2buff(conFile)
+    dsn = self.__buff2dsn(buff)
     return dsn
 
-  def conFile2buff(self,conFile):
+  def __conFile2buff(self,conFile):
     f=open(conFile,'r')
     buff = {}
     for line in f:
@@ -31,7 +31,7 @@ class File():
     f.close()
     return buff 
 
-  def buff2dsn(self,buff):
+  def __buff2dsn(self,buff):
     dsn = {}
     dsn['host'] = buff['HOST']
     dsn['database'] = buff['DATABASE_NAME']
@@ -42,17 +42,11 @@ class File():
   def returnSqls(self,sqlFile):
     longLine = ''
     sqls = []
-    longLine = self.sqlFile2longLine(sqlFile)
-    sqls = self.longLine2sqls(longLine)
+    longLine = self.__sqlFile2longLine(sqlFile)
+    sqls = self.__longLine2sqls(longLine)
     return sqls
 
-  def longLine2sqls(self,longLine):
-    sqls = []
-    sqls = longLine.split(';')
-    sqls.pop()
-    return sqls
-
-  def sqlFile2longLine(self,sqlFile):
+  def __sqlFile2longLine(self,sqlFile):
     longLine = ''
     f=open(sqlFile,'r')
     for line in f:
@@ -60,48 +54,55 @@ class File():
     f.close()
     return longLine
 
+  def __longLine2sqls(self,longLine):
+    sqls = []
+    sqls = longLine.split(';')
+    sqls.pop()
+    return sqls
+
 class PgProcess():
 
   def __init__(self,dsn,container):
-    self._con = pgdb.connect(**dsn) 
-    self._cur = self._con.cursor() 
-    self.explainService = ExplainService(dsn)
-    self.container = container
-    self.qID = 0
-    self.totalTime = 0
+    self.__con = pgdb.connect(**dsn) 
+    self.__cur = self.__con.cursor() 
+    self.__explainService = ExplainService(dsn)
+    self.__container = container
+    self.__qID = 0
+    self.__totalTime = 0
 
   def run(self,sqls):
     try:
-      self.createSessionRunningSql(sqls)
+      self.__createSessionRunningSql(sqls)
     except :
       raise
     finally:
-      self._con.close()
-      self._cur.close()
+      self.__con.close()
+      self.__cur.close()
     return
 
-  def createSessionRunningSql(self,sqls):
+  def __createSessionRunningSql(self,sqls):
     for sql in sqls:
-      self.runSql(sql,self.qID)
-      self.qID += 1
-    self.container.totalTime = self.totalTime
-    self._cur.execute(INDEX_QUERY)
-    self.container.indexes = self._cur.fetchall()
+      self.__runSql(sql,self.__qID)
+      self.__qID += 1
+    self.__container.totalTime = self.__totalTime
+    self.__cur.execute(INDEX_QUERY)
+    self.__container.indexes = self.__cur.fetchall()
     return
   
-  def runSql(self,sql,qID):
-    eachTime = self.timeSql(sql)
-    self.totalTime += eachTime
-    self.container.eachTimes[qID] = eachTime
-    self.container.sqls[qID] = sql
-    self.container.plans[qID] = self.explainService.getExplain(sql)
-    self.container.heads[qID] = self._cur.description
-    self.container.results[qID] = self._cur.fetchall()
-    self.container.qIDs.append(qID)
+  def __runSql(self,sql,qID):
+    eachTime = self.__timeSql(sql)
+    self.__totalTime += eachTime
+    self.__container.eachTimes[qID] = eachTime
+    self.__container.sqls[qID] = sql
+    self.__container.plans[qID] = self.__explainService.getExplain(sql)
+    self.__container.heads[qID] = self.__cur.description
+    self.__container.results[qID] = self.__cur.fetchall()
+    self.__container.qIDs.append(qID)
+    return
 
-  def timeSql(self,sql):
+  def __timeSql(self,sql):
     startTime = time.time()
-    self._cur.execute(sql)
+    self.__cur.execute(sql)
     eachTime = time.time() - startTime
     return eachTime
 
@@ -124,23 +125,23 @@ class ResultContainer():
   def showOneResult(self,qID):
     print ''
     print self.sqls[qID]
-    headOut = self.makeHead(self.heads[qID])
+    headOut = self.__makeHead(self.heads[qID])
     print headOut
-    self.showResult(self.results[qID])
+    self.__showResult(self.results[qID])
     print ''
-    self.showLines(self.plans[qID])
+    self.__showLines(self.plans[qID])
     print DIVIDER
     print ' %d 行' % len(self.results[qID])
     print ' %.2f sec' % self.eachTimes[qID]
     print QUERY_DIVIDER
  
   def showSummary(self):
-    self.showLines(self.indexes)
+    self.__showLines(self.indexes)
     print DIVIDER
-    self.showTotal(self.eachTimes,self.totalTime)
+    self.__showTotal(self.eachTimes,self.totalTime)
     print ''
 
-  def makeHead(self,heads):
+  def __makeHead(self,heads):
     headOut ='('
     for h in heads:
       if not headOut == '(':
@@ -149,17 +150,17 @@ class ResultContainer():
     headOut +=')'
     return headOut
   
-  def showResult(self,result):
+  def __showResult(self,result):
     limiter = 0
     for row in result:
-      rowOut = self.makeRow(row)
+      rowOut = self.__makeRow(row)
       print rowOut
       limiter += 1
       if limiter >= ROW_LIMIT:
          break
     return
 
-  def makeRow(self,row):
+  def __makeRow(self,row):
     rowOut =' ['
     for column in row:
       if not rowOut == ' [':
@@ -171,12 +172,12 @@ class ResultContainer():
     rowOut += ']'
     return rowOut
   
-  def showLines(self,lines):
+  def __showLines(self,lines):
     for line in lines:
       print line
     return
 
-  def showTotal(self,eachTimes,totalTime):
+  def __showTotal(self,eachTimes,totalTime):
     count = 0
     for eachTime in eachTimes.values():
       count += 1
@@ -186,23 +187,23 @@ class ResultContainer():
 class ExplainService():
 
   def __init__(self,dsn):
-    self._con = pgdb.connect(**dsn) 
-    self._cur = self._con.cursor() 
+    self.__con = pgdb.connect(**dsn) 
+    self.__cur = self.__con.cursor() 
     self.enableSqls = []
  
   def cutHighCost(self,sqls):
     try:
-      self.enableSqls = self.createSessionCutHighCost(sqls)
+      self.enableSqls = self.__createSessionCutHighCost(sqls)
     except:
       raise
     finally:
-      self._con.close()
-      self._cur.close()
+      self.__con.close()
+      self.__cur.close()
     if len(self.enableSqls) < 1:
       raise NoEnableSql()
     return
 
-  def createSessionCutHighCost(self,sqls):
+  def __createSessionCutHighCost(self,sqls):
     enableSqls = []
     for sql in sqls:
       plan = self.getExplain(sql)
@@ -210,13 +211,13 @@ class ExplainService():
       if cost < COST_LIMIT:
         enableSqls.append(sql)
       else:
-        warnLimitOver(sql,cost)
+        __warnLimitOver(sql,cost)
     return enableSqls 
 
   def getExplain(self,sql):
     exp_q = 'explain ' + sql
-    self._cur.execute(exp_q)
-    plan = self._cur.fetchall()
+    self.__cur.execute(exp_q)
+    plan = self.__cur.fetchall()
     return plan
 
   def getCost(self,plan):
@@ -228,7 +229,7 @@ class ExplainService():
         break
     return cost
   
-  def warnLimitOver(self,sql,cost):
+  def __warnLimitOver(self,sql,cost):
     print 'this query dosn\'t'
     print DIVIDER
     print sql
