@@ -1,5 +1,5 @@
 #!/bin/bash
-logdir=~/log/`date +%Y%m%d`
+logdir=./log/`date +%Y%m%d`
 loghead=`date +%H%M%S_`
 conf=/etc/postgresql/9.2/main/postgresql.conf
 
