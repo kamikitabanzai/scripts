@@ -14,7 +14,12 @@ INDEX_QUERY = 'select tablename , indexname , indexdef from pg_indexes where sch
 
 class File():
 
-  def returnDsn(self,conFile):
+  def returnFromFile(self,obj,file):
+    return obj.returnFromFile(file)
+
+class DnsFileService():
+
+  def returnFromFile(self,conFile):
     buff = {}
     dsn = {}
     buff = self.__conFile2buff(conFile)
@@ -39,7 +44,9 @@ class File():
     dsn['password'] = buff['DATABASE_PASS']
     return dsn
 
-  def returnSqls(self,sqlFile):
+class SqlFileService():
+
+  def returnFromFile(self,sqlFile):
     longLine = ''
     sqls = []
     longLine = self.__sqlFile2longLine(sqlFile)
@@ -240,10 +247,11 @@ class ExplainService():
 class MyCseService:
   def __init__(self,sqlFile):
     dsn = {}
-    file = File()
     self.sqls = []
-    dsn = file.returnDsn('con.con')
-    self.sqls = file.returnSqls(sqlFile)
+    # ダックタイピングをしてみる(Javaでもインターフェース使って出来るよ！）
+    file = File()
+    dsn = file.returnFromFile(DnsFileService(),'con.con')
+    self.sqls = file.returnFromFile(SqlFileService(),sqlFile)
     self.explainService = ExplainService(dsn)
     self.container = ResultContainer()
     # 実行結果はコンテナに格納する
