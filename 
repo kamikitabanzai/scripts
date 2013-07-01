@@ -1,0 +1,4 @@
+DATABASE_NAME = wikipedia
+DATABASE_USER = postgres
+DATABASE_PASS = postgres
+HOST = localhost
