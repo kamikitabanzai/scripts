@@ -80,6 +80,8 @@ class PgProcess():
   def run(self,sqls):
     try:
       self.__createSessionRunningSql(sqls)
+    except pgdb.DatabaseError:
+      print 'database error!'
     except :
       raise
     finally:
@@ -201,6 +203,8 @@ class ExplainService():
   def cutHighCost(self,sqls):
     try:
       self.enableSqls = self.__createSessionCutHighCost(sqls)
+    except pgdb.DatabaseError:
+      print 'database error!'
     except:
       raise
     finally:
