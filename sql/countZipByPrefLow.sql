@@ -1,9 +1,12 @@
-select count(a.new_zip_id),a.pref
+select count(a.pref),a.pref
 from 
-(select new_zip_id,pref
+(select new_zip_id
+        ,pref
   from mst_zip
-  group by new_zip_id,pref
-  order by new_zip_id) a
+  group by new_zip_id
+          ,pref
+  order by new_zip_id
+) a
 group by a.pref
-order by count(a.new_zip_id)
+order by count(a.pref)
 ;
